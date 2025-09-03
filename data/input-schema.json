@@ -182,9 +182,55 @@
           "description": "The type of calculation to perform"
         }
       }
+    },
+    "membrane": {
+        "$ref": "#/$defs/membrane"
     }
   },
   "$defs": {
+    "membrane": {
+      "description": "Specify configuration of a membrane.",
+      "type": "object",
+      "properties": {
+        "shape": {
+            "type": "string",
+            "enum": ["slab", "cone", "bowtie"]
+        },
+        "dielectric": {
+            "type": "number"
+        },
+        "center": {
+            "type": "array",
+            "items": { "type": "number" },
+            "minItems": 3,
+            "maxItems": 3
+        },
+        "axis": {
+            "type": "string",
+            "enum": ["x", "y", "z"]
+        },
+        "thickness": { "type": "number" },
+        "radius": { "type": "number" },
+        "radius2": { "type": "number" },
+        "neckradius": { "type": "number" },
+        "neckshift": { "type": "number" }
+      },
+      "required": ["shape", "dielectric", "center", "thickness"],
+      "allOf": [
+          {
+              "if": { "properties": { "shape": { "const": "slab" } } },
+              "then": { "required": ["radius"] }
+          },
+          {
+              "if": { "properties": { "shape": { "const": "cone" } } },
+              "then": { "required": ["radius", "radius2"] }
+          },
+          {
+              "if": { "properties": { "shape": { "const": "bowtie" } } },
+              "then": { "required": ["radius", "neckradius"] }
+          }
+      ]
+    },
     "dx": {
       "description": "OpenDX scalar data format"
     },

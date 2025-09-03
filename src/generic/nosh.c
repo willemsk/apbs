@@ -344,6 +344,7 @@ VPUBLIC int NOsh_ctor2(NOsh *thee, int rank, int size) {
     for (i=0; i<NOSH_MAXMOL; i++) {
         thee->alist[i] = VNULL;
     }
+    thee->memparm = MemParm_ctor();
     thee->ncalc = 0;
     thee->nelec = 0;
     thee->napol = 0;
@@ -367,6 +368,7 @@ VPUBLIC void NOsh_dtor2(NOsh *thee) {
         for (i=0; i<(thee->ncalc); i++) NOsh_calc_dtor(&(thee->calc[i]));
         for (i=0; i<(thee->nelec); i++) NOsh_calc_dtor(&(thee->elec[i]));
         for (i=0; i<(thee->napol); i++) NOsh_calc_dtor(&(thee->apol[i]));
+        if (thee->memparm != VNULL) MemParm_dtor(&(thee->memparm));
     }
 
 }
@@ -514,6 +516,79 @@ VPUBLIC int NOsh_parseInputFile(
     return rc;
 }
 
+VPRIVATE int NOsh_parseMEMBRANE(NOsh *thee, Vio *sock) {
+    char tok[VMAX_BUFSIZE];
+    double dx, dy, dz, tf;
+
+    VASSERT(thee != VNULL);
+    VASSERT(sock != VNULL);
+
+    thee->memparm->haveMembrane = 1;
+
+    /* This is a block-style keyword, so we read until "end" */
+    while(Vio_scanf(sock, "%s", tok) == 1) {
+        if (Vstring_strcasecmp(tok, "end") == 0) {
+            return 1;
+        } else if (Vstring_strcasecmp(tok, "shape") == 0) {
+            VJMPERR1(Vio_scanf(sock, "%s", tok) == 1);
+            if (Vstring_strcasecmp(tok, "slab") == 0) {
+                thee->memparm->shape = MS_SLAB;
+            } else if (Vstring_strcasecmp(tok, "cone") == 0) {
+                thee->memparm->shape = MS_CONE;
+            } else if (Vstring_strcasecmp(tok, "bowtie") == 0) {
+                thee->memparm->shape = MS_BOWTIE;
+            } else {
+                Vnm_print(2, "NOsh_parseMEMBRANE: Invalid shape %s\n", tok);
+                return 0;
+            }
+        } else if (Vstring_strcasecmp(tok, "dielectric") == 0) {
+            VJMPERR1(Vio_scanf(sock, "%s", tok) == 1);
+            VJMPERR1(sscanf(tok, "%lf", &tf) == 1);
+            thee->memparm->dielectric = tf;
+        } else if (Vstring_strcasecmp(tok, "center") == 0) {
+            VJMPERR1(Vio_scanf(sock, "%s", tok) == 1);
+            VJMPERR1(sscanf(tok, "%lf", &dx) == 1);
+            VJMPERR1(Vio_scanf(sock, "%s", tok) == 1);
+            VJMPERR1(sscanf(tok, "%lf", &dy) == 1);
+            VJMPERR1(Vio_scanf(sock, "%s", tok) == 1);
+            VJMPERR1(sscanf(tok, "%lf", &dz) == 1);
+            thee->memparm->center[0] = dx;
+            thee->memparm->center[1] = dy;
+            thee->memparm->center[2] = dz;
+        } else if (Vstring_strcasecmp(tok, "axis") == 0) {
+            VJMPERR1(Vio_scanf(sock, "%s", tok) == 1);
+            thee->memparm->axis = tok[0];
+        } else if (Vstring_strcasecmp(tok, "thickness") == 0) {
+            VJMPERR1(Vio_scanf(sock, "%s", tok) == 1);
+            VJMPERR1(sscanf(tok, "%lf", &tf) == 1);
+            thee->memparm->thickness = tf;
+        } else if (Vstring_strcasecmp(tok, "radius") == 0) {
+            VJMPERR1(Vio_scanf(sock, "%s", tok) == 1);
+            VJMPERR1(sscanf(tok, "%lf", &tf) == 1);
+            thee->memparm->radius = tf;
+            thee->memparm->radius2 = tf; // Default radius2 to radius
+        } else if (Vstring_strcasecmp(tok, "radius2") == 0) {
+            VJMPERR1(Vio_scanf(sock, "%s", tok) == 1);
+            VJMPERR1(sscanf(tok, "%lf", &tf) == 1);
+            thee->memparm->radius2 = tf;
+        } else if (Vstring_strcasecmp(tok, "neckradius") == 0) {
+            VJMPERR1(Vio_scanf(sock, "%s", tok) == 1);
+            VJMPERR1(sscanf(tok, "%lf", &tf) == 1);
+            thee->memparm->neck_radius = tf;
+        } else if (Vstring_strcasecmp(tok, "neckshift") == 0) {
+            VJMPERR1(Vio_scanf(sock, "%s", tok) == 1);
+            VJMPERR1(sscanf(tok, "%lf", &tf) == 1);
+            thee->memparm->neckshift = tf;
+        } else {
+            Vnm_print(2, "NOsh_parseMEMBRANE:  Ignoring undefined keyword %s!\n", tok);
+        }
+    }
+
+VERROR1:
+    Vnm_print(2, "NOsh_parseMEMBRANE:  Ran out of tokens!\n");
+    return 0;
+}
+
 VPUBLIC int NOsh_parseInput(
                             NOsh *thee,
                             Vio *sock
@@ -586,6 +661,10 @@ VPUBLIC int NOsh_parseInput(
             if (!NOsh_parseAPOLAR(thee, sock)) return 0;
             Vnm_print(0, "NOsh: Done parsing APOLAR section (nelec = %d)\n",
                       thee->nelec);
+        } else if (Vstring_strcasecmp(tok, "membrane") == 0) {
+            Vnm_print(0, "NOsh: Parsing MEMBRANE section\n");
+            if (!NOsh_parseMEMBRANE(thee, sock)) return 0;
+            Vnm_print(0, "NOsh: Done parsing MEMBRANE section\n");
         } else if (Vstring_strcasecmp(tok, "quit") == 0) {
             Vnm_print(0, "NOsh: Done parsing file (got QUIT)\n");
             break;
@@ -1221,6 +1300,12 @@ run!\n");
 
     /* The next token HAS to be the method OR "name" */
     if (Vio_scanf(sock, "%s", tok) == 1) {
+        if (thee->memparm->haveMembrane) {
+            calc = thee->elec[thee->nelec];
+            if (calc != VNULL) {
+                MemParm_copy(calc->pbeparm->memparm, thee->memparm);
+            }
+        }
         if (Vstring_strcasecmp(tok, "name") == 0) {
             Vio_scanf(sock, "%s", tok);
             strncpy(thee->elecname[thee->nelec], tok, VMAX_ARGLEN);

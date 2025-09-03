@@ -19,7 +19,7 @@
  * Institute, Pacific Northwest Division for the U.S. Department of Energy.
  *
  * Portions Copyright (c) 2002-2010, Washington University in St. Louis.
- * Portions Copyright (c) 2002-2020, Nathan A. Baker.
+ * Portions Copyright (c) 2002-2010, Nathan A. Baker.
  * Portions Copyright (c) 1999-2002, The Regents of the University of
  * California.
  * Portions Copyright (c) 1995, Michael Holst.
@@ -167,6 +167,8 @@ VPUBLIC int PBEparm_ctor2(PBEparm *thee) {
     thee->setsmsize = 0;
     thee->setsmvolume = 0;
 
+    thee->memparm = MemParm_ctor();
+
     return 1;
 }
 
@@ -178,7 +180,11 @@ VPUBLIC void PBEparm_dtor(PBEparm **thee) {
     }
 }
 
-VPUBLIC void PBEparm_dtor2(PBEparm *thee) { ; }
+VPUBLIC void PBEparm_dtor2(PBEparm *thee) {
+    if (thee->memparm != VNULL) {
+        MemParm_dtor(&(thee->memparm));
+    }
+}
 
 VPUBLIC int PBEparm_check(PBEparm *thee) {
 
@@ -360,6 +366,8 @@ VPUBLIC void PBEparm_copy(PBEparm *thee, PBEparm *parm) {
 
     thee->setsmsize = parm->setsmsize;
     thee->setsmvolume = parm->setsmvolume;
+
+    MemParm_copy(thee->memparm, parm->memparm);
 
     thee->parsed = parm->parsed;
 

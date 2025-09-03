@@ -77,6 +77,7 @@
 #include "generic/geoflowparm.h"
 #include "generic/pbamparm.h" 
 #include "generic/pbsamparm.h" //path might change
+#include "generic/membrane.h"
 
 /** @brief Maximum number of molecules in a run
 *  @ingroup NOsh */
@@ -269,6 +270,7 @@ struct sNOsh {
         for ELEC statement */
     char apolname[NOSH_MAXCALC][VMAX_ARGLEN]; /**< Optional user-specified name
         for APOLAR statement */
+    MemParm *memparm; /**< Membrane parameters */
 };
 
 /**
@@ -400,7 +402,7 @@ VEXTERNC int NOsh_getChargefmt(NOsh *thee, int imap);
 #   define NOsh_getChargepath(thee, imol) ((thee)->chargepath[(imol)])
 #   define NOsh_getCalc(thee, icalc) ((thee)->calc[(icalc)])
 #   define NOsh_getDielfmt(thee, imap) ((thee)->dielfmt[(imap)])
-#   define NOsh_getKappafmt(thee, imap) ((thee)->kappafmt[(imap)])
+#   define NOsh_getKappafmt(thee, imap) ((thee->kappafmt[(imap)])
 #   define NOsh_getPotfmt(thee, imap) ((thee)->potfmt[(imap)])
 #   define NOsh_getChargefmt(thee, imap) ((thee)->chargefmt[(imap)])
 
@@ -595,4 +597,3 @@ VEXTERNC int NOsh_setupApolCalc(
                                 );
 
 #endif
-

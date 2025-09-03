@@ -53,7 +53,7 @@
  * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
  * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+ * ARISING IN ANY WAY OUT of THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  *
  * @endverbatim
@@ -68,6 +68,7 @@
 
 #include "generic/vhal.h"
 #include "generic/vstring.h"
+#include "generic/membrane.h"
 
 /** @brief   Number of things that can be written out in a single calculation
  *  @ingroup PBEparm
@@ -166,6 +167,8 @@ struct sPBEparm {
     int setcalcenergy;  /**< Flag, @see calcenergy */
     PBEparm_calcForce calcforce;  /**< Atomic forces calculation */
     int setcalcforce;  /**< Flag, @see calcforce */
+
+    MemParm *memparm;
 
     /*----------------------------------------------------------------*/
     /* Added by Michael Grabe                                         */
@@ -311,4 +314,3 @@ VEXTERNC int PBEparm_parseToken(
 
 
 #endif
-

@@ -21,7 +21,7 @@ export BUILD_PYBIND=0
 #case "${ostype}" in
 #      # NOTE: clang on Github Actions cannot fine Accelerate Framework
 #      #       so you will get errors about not being able to find xerbla_
-#      # Darwin*)    export CC=clang; export CXX=clang++;;
+#      Darwin*)    export CC=clang; export CXX=clang++;;
 #      Darwin*)    export CC=gcc-9; export CXX=g++-9;;# export CMAKE_C_FLAGS="-Wl,-rpath=@executable_path/../lib "; export CMAKE_CXX_FLAGS="-Wl,-rpath=@executable_path/../lib ";;
 #      Linux*)     export CC=gcc-9; export CXX=g++-9;;
 #esac
@@ -37,9 +37,6 @@ export COVERAGE=""
 : ${BUILD_DIR=$SRC_DIR/build}
 : ${INSTALL_DIR=$HOME/apbs}
 export PATH=$INSTALL_DIR:$PATH
-
-echo "Build dir: ${BUILD_DIR}"
-echo "Install dir: ${INSTALL_DIR}"
 
 # set variables only if they're not already set
 : ${RELEASE_TYPE:=Release}
@@ -59,7 +56,7 @@ echo "Install dir: ${INSTALL_DIR}"
 : ${ENABLE_PYTHON:=OFF}
 : ${ENABLE_TESTS:=ON}
 : ${GET_NanoShaper:=ON}
-: ${PYTHON_VERSION:="3.10"}
+: ${PYTHON_VERSION:="3.12"}
  
 echo "==================================== WHERE AM I ==================================== "
 pwd
@@ -140,6 +137,8 @@ cmake -S .. -B $BUILD_DIR                                 \
       -DENABLE_TESTS=${ENABLE_TESTS}                      \
       -DFETK_VERSION="${FETK_VERSION}"                    \
       -DPYTHON_VERSION="${PYTHON_VERSION}"                \
+      -DBLAS_LIBRARIES=/usr/lib/x86_64-linux-gnu/libblas.so \
+      -DLAPACK_LIBRARIES=/usr/lib/x86_64-linux-gnu/liblapack.so \
       ..                                                  || exit 1
  
 echo "==================================== BUILD =============================================== "

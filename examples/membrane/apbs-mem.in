@@ -1,0 +1,32 @@
+# Example input file for a membrane calculation
+
+read
+    mol pqr protein.pqr
+end
+
+elec
+    mg-auto
+
+    # Define the membrane
+    membrane
+        shape bowtie
+        dielectric 2.0
+        center 0.0 0.0 0.0
+        axis z
+        thickness 40.0
+        radius 20.0
+        radius2 15.0
+        neckradius 5.0
+        neckshift 5.0
+    end
+
+    # Standard PBE parameters
+    pdie 2.0
+    sdie 80.0
+    srad 1.4
+    temp 298.15
+    calcenergy total
+    write pot dx membrane_potential
+end
+
+quit

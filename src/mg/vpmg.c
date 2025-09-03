@@ -71,6 +71,7 @@
  */
 
 #include "vpmg.h"
+#include "generic/membrane.h"
 
 VEMBED(rcsid="$Id$")
 
@@ -864,6 +865,37 @@ VPUBLIC void Vpmg_setPart(Vpmg *thee, double lowerCorner[3],
                 if (VABS(xok*yok*zok) < VPMGSMALL) thee->pvec[IJK(i,j,k)] = 0.0;
                 else thee->pvec[IJK(i,j,k)] = xok*yok*zok;
 
+            }
+        }
+    }
+
+    /* Add the membrane */
+    if (thee->pbe->pbeparm->memparm->haveMembrane) {
+        for (k=0; k<nz; k++) {
+            for (j=0; j<ny; j++) {
+                for (i=0; i<nx; i++) {
+                    // x-face
+                    position[0] = xmin + (i+0.5)*hx;
+                    position[1] = ymin + j*hy;
+                    position[2] = zmin + k*hzed;
+                    if (is_in_membrane(position, thee->pbe->pbeparm->memparm)) {
+                        thee->epsx[IJK(i,j,k)] = thee->pbe->pbeparm->memparm->dielectric;
+                    }
+                    // y-face
+                    position[0] = xmin + i*hx;
+                    position[1] = ymin + (j+0.5)*hy;
+                    position[2] = zmin + k*hzed;
+                    if (is_in_membrane(position, thee->pbe->pbeparm->memparm)) {
+                        thee->epsy[IJK(i,j,k)] = thee->pbe->pbeparm->memparm->dielectric;
+                    }
+                    // z-face
+                    position[0] = xmin + i*hx;
+                    position[1] = ymin + j*hy;
+                    position[2] = zmin + (k+0.5)*hzed;
+                    if (is_in_membrane(position, thee->pbe->pbeparm->memparm)) {
+                        thee->epsz[IJK(i,j,k)] = thee->pbe->pbeparm->memparm->dielectric;
+                    }
+                }
             }
         }
     }
@@ -4330,6 +4362,21 @@ VPRIVATE void fillcoCoefMolIon(Vpmg *thee) {
         }
     } /* endfor (over all atoms) */
 
+    /* Add the membrane */
+    if (thee->pbe->pbeparm->memparm->haveMembrane) {
+        for (k=0; k<nz; k++) {
+            for (j=0; j<ny; j++) {
+                for (i=0; i<nx; i++) {
+                    position[0] = xmin + i*hx;
+                    position[1] = ymin + j*hy;
+                    position[2] = zmin + k*hzed;
+                    if (is_in_membrane(position, thee->pbe->pbeparm->memparm)) {
+                        thee->kappa[IJK(i,j,k)] = 0.0;
+                    }
+                }
+            }
+        }
+    }
 }
 
 VPRIVATE void fillcoCoefMolDiel(Vpmg *thee) {
